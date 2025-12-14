@@ -1,0 +1,2 @@
+# Kaijunim
+A stupid idea
