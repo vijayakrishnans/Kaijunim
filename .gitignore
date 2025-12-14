@@ -1,0 +1,7 @@
+node_modules
+.next
+.env
+/apps/web/.next
+/dist
+target
+.DS_Store
