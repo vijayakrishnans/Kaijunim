@@ -1,0 +1,17 @@
+{
+  "name": "kaijunim",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace web",
+    "build": "npm run build --workspace web",
+    "lint": "npm run lint --workspace web",
+    "seed": "tsx seed/index.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
