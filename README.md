@@ -41,3 +41,15 @@ This repo contains a minimal, production-oriented scaffold for **VidSocial**, a 
 5. Use `npm run seed` to populate dev data.
 
 Each package contains more detailed instructions in its README or comments.
+
+## Publishing to GitHub
+
+This repo is ready to push to a new GitHub project:
+
+1. Create a new GitHub repository (without adding a README/License to avoid conflicts).
+2. Add this remote: `git remote add origin https://github.com/<your-org>/<your-repo>.git`.
+3. Push the current branch: `git push -u origin work` (or rename to `main`).
+4. GitHub Actions will run the included CI workflow (`.github/workflows/ci.yml`) to lint the Next.js app and run Rust checks.
+5. Fill in `.env` files with your Supabase, R2, and Redis settings before deploying. Avoid committing secrets.
+
+To keep CI healthy, ensure new changes pass `npm run lint --workspace web`, `cargo fmt --all -- --check`, and `cargo check -p api -p worker` locally before pushing.
