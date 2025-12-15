@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Moon, Sun, Menu, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const links = [
@@ -24,8 +24,14 @@ const links = [
 
 export const Navigation = () => {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme(); // ✅ use resolvedTheme
   const [open, setOpen] = useState(false);
+
+  // ✅ prevent hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && resolvedTheme === 'dark';
 
   return (
     <header className="border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 backdrop-blur bg-white/80 dark:bg-slate-950/80">
@@ -50,14 +56,23 @@ export const Navigation = () => {
             ))}
           </div>
         </div>
+
         <button
           className="p-2 rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
           aria-label="Toggle dark mode"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
         >
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {/* render a stable placeholder until mounted */}
+          {!mounted ? (
+            <span className="block h-4 w-4" />
+          ) : isDark ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
         </button>
       </nav>
+
       {open && (
         <div className="sm:hidden px-4 pb-3 space-y-2">
           {links.map((link) => (
