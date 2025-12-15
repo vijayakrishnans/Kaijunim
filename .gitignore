@@ -1,7 +1,38 @@
-node_modules
-.next
+# =========================
+# Environment variables
+# =========================
 .env
-/apps/web/.next
-/dist
-target
+.env.*
+!.env.example
+
+# =========================
+# Node / Next.js
+# =========================
+node_modules/
+.next/
+out/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Rust
+# =========================
+target/
+Cargo.lock.backup
+
+# =========================
+# OS / Editor
+# =========================
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================
+# Temporary / junk
+# =========================
+*.log
+*.tmp
+*.swp
