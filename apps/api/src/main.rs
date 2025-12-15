@@ -57,6 +57,8 @@ use std::net::SocketAddr;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
+mod routes;
+
 #[derive(Clone, Default)]
 struct AppState {}
 
@@ -78,8 +80,16 @@ async fn sample_products(State(_state): State<AppState>) -> impl IntoResponse {
     }
 
     let items = vec![
-        Product { id: "prod-1", title: "Digital asset pack 1", price: 29.0 },
-        Product { id: "prod-2", title: "Digital asset pack 2", price: 34.0 },
+        Product {
+            id: "prod-1",
+            title: "Digital asset pack 1",
+            price: 29.0,
+        },
+        Product {
+            id: "prod-2",
+            title: "Digital asset pack 2",
+            price: 34.0,
+        },
     ];
 
     Json(items)
@@ -98,6 +108,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/health", get(healthcheck))
         .route("/products", get(sample_products))
+        .nest("/api", routes::api_router())
         .with_state(state)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http());
