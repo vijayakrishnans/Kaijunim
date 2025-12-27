@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { api } from '@/lib/mock-client';
-import { useQuery } from '@tanstack/react-query';
+import { useJobs, useProducts } from '@/lib/api/hooks';
 import { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 function ProductsTab() {
-  const { data, isLoading } = useQuery({ queryKey: ['products'], queryFn: api.getMarketplaceProducts });
+  const { data, isLoading, isError } = useProducts();
   const [term, setTerm] = useState('');
   const [category, setCategory] = useState('all');
   const [minPrice, setMinPrice] = useState('');
@@ -18,8 +18,8 @@ function ProductsTab() {
   const [sort, setSort] = useState('recent');
 
   const filtered = useMemo(() => {
-    if (!data) return [];
-    return data
+    if (!data?.items) return [];
+    return data.items
       .filter((p) => p.title.toLowerCase().includes(term.toLowerCase()) || p.description.toLowerCase().includes(term.toLowerCase()))
       .filter((p) => (category === 'all' ? true : p.category === category))
       .filter((p) => (minPrice ? p.price >= Number(minPrice) : true))
@@ -35,12 +35,13 @@ function ProductsTab() {
           case 'popular':
             return b.metrics.sales - a.metrics.sales;
           default:
-            return b.id.localeCompare(a.id);
+            return b.createdAt.localeCompare(a.createdAt);
         }
       });
   }, [data, term, category, minPrice, maxPrice, sort]);
 
   if (isLoading) return <p>Loading products...</p>;
+  if (isError) return <p className="text-red-500">Failed to load products.</p>;
 
   return (
     <div className="space-y-4">
@@ -66,13 +67,13 @@ function ProductsTab() {
       </div>
       <div className="flex items-center gap-3">
         <Button asChild>
-          <a href="/create-product">List Product</a>
+          <Link href="/create-product">List Product</Link>
         </Button>
         <Button variant="outline" asChild>
-          <a href="/open-source">Support OSS</a>
+          <Link href="/open-source">Support OSS</Link>
         </Button>
         <Button variant="outline" asChild>
-          <a href="/tools">Tools</a>
+          <Link href="/tools">Tools</Link>
         </Button>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
@@ -85,9 +86,7 @@ function ProductsTab() {
               </div>
               <div className="text-right text-sm">
                 <p className="font-semibold">${product.price.toFixed(2)}</p>
-                {product.discount && (
-                  <p className="text-emerald-500">-{product.discount.percentage}%</p>
-                )}
+                {product.discount && <p className="text-emerald-500">-{product.discount.percent}%</p>}
               </div>
             </CardHeader>
             <CardContent>
@@ -97,7 +96,7 @@ function ProductsTab() {
                 <span>{product.metrics.sales} sales</span>
               </div>
               <Button variant="ghost" asChild className="mt-2">
-                <a href={`/product/${product.id}`}>View</a>
+                <Link href={`/marketplace/product/${product.id}`}>View</Link>
               </Button>
             </CardContent>
           </Card>
@@ -109,31 +108,32 @@ function ProductsTab() {
 }
 
 function JobsTab() {
-  const { data, isLoading } = useQuery({ queryKey: ['marketplace-jobs'], queryFn: api.getMarketplaceJobs });
+  const { data, isLoading, isError } = useJobs();
   const [term, setTerm] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('recent');
   const [status, setStatus] = useState('all');
 
   const filtered = useMemo(() => {
-    if (!data) return [];
-    return data
+    if (!data?.items) return [];
+    return data.items
       .filter((j) => j.title.toLowerCase().includes(term.toLowerCase()) || j.description.toLowerCase().includes(term.toLowerCase()))
       .filter((j) => (category === 'all' ? true : j.category === category))
       .filter((j) => (status === 'all' ? true : j.status === status))
       .sort((a, b) => {
         switch (sort) {
           case 'budget-asc':
-            return parseFloat(a.budget.slice(1)) - parseFloat(b.budget.slice(1));
+            return a.budgetMin - b.budgetMin;
           case 'budget-desc':
-            return parseFloat(b.budget.slice(1)) - parseFloat(a.budget.slice(1));
+            return b.budgetMax - a.budgetMax;
           default:
-            return b.id.localeCompare(a.id);
+            return b.createdAt.localeCompare(a.createdAt);
         }
       });
   }, [data, term, category, sort, status]);
 
   if (isLoading) return <p>Loading jobs...</p>;
+  if (isError) return <p className="text-red-500">Failed to load jobs.</p>;
 
   return (
     <div className="space-y-4">
@@ -141,7 +141,7 @@ function JobsTab() {
         <Input placeholder="Search" value={term} onChange={(e) => setTerm(e.target.value)} />
         <Select value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="all">All categories</option>
-          {['translator', 'artist', 'game developer', 'designer', 'composer', 'developer'].map((cat) => (
+          {['translator', 'artist', 'game developer', 'designer', 'composer', 'developer', 'manager', 'editor'].map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
@@ -160,7 +160,7 @@ function JobsTab() {
       </div>
       <div className="flex items-center gap-3">
         <Button asChild>
-          <a href="/post-job">Post Job</a>
+          <Link href="/post-job">Post Job</Link>
         </Button>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
@@ -172,7 +172,9 @@ function JobsTab() {
                 <p className="text-sm text-slate-500">{job.category}</p>
               </div>
               <div className="text-sm text-slate-500 text-right">
-                <p>{job.budget}</p>
+                <p>
+                  ${job.budgetMin} - ${job.budgetMax}
+                </p>
                 <p className="capitalize">{job.status}</p>
               </div>
             </CardHeader>
@@ -180,10 +182,10 @@ function JobsTab() {
               <p className="text-sm text-slate-500">{job.description}</p>
               <div className="flex gap-3 text-sm text-slate-500">
                 <span>{job.duration}</span>
-                <span>{job.applications} applications</span>
+                <span>{job.applicationsCount} applications</span>
               </div>
               <Button variant="ghost" asChild className="mt-2">
-                <a href={`/job/${job.id}`}>View</a>
+                <Link href={`/jobs/${job.id}`}>View</Link>
               </Button>
             </CardContent>
           </Card>

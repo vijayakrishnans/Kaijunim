@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { api } from '@/lib/mock-client';
-import { useQuery } from '@tanstack/react-query';
+import { useJob } from '@/lib/api/hooks';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 function JobDetail() {
   const params = useParams<{ id: string }>();
-  const { data, isLoading } = useQuery({ queryKey: ['job', params.id], queryFn: api.getMarketplaceJobs });
-  const job = data?.find((j) => j.id === params.id);
+  const { data, isLoading, isError } = useJob(params?.id);
+  const job = data?.item;
 
   if (isLoading) return <p>Loading job...</p>;
+  if (isError) return <p className="text-red-500">Failed to load job.</p>;
   if (!job) return <p>Job not found.</p>;
 
   return (
@@ -22,7 +22,9 @@ function JobDetail() {
           <p className="text-sm text-slate-500">{job.category}</p>
         </div>
         <div className="text-sm text-slate-500 text-right">
-          <p>{job.budget}</p>
+          <p>
+            ${job.budgetMin} - ${job.budgetMax}
+          </p>
           <p className="capitalize">{job.status}</p>
         </div>
       </CardHeader>
@@ -34,6 +36,11 @@ function JobDetail() {
               {req}
             </span>
           ))}
+        </div>
+        <div className="flex gap-3 text-sm text-slate-500">
+          <span>{job.duration}</span>
+          <span>{job.views} views</span>
+          <span>{job.applicationsCount} applications</span>
         </div>
         <Button>Apply Now</Button>
       </CardContent>

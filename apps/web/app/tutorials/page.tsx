@@ -1,26 +1,27 @@
-"use client";
+'use client';
 
-import { api } from '@/lib/mock-client';
-import { useQuery } from '@tanstack/react-query';
+import { useTutorials } from '@/lib/api/hooks';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 
 function TutorialsContent() {
-  const { data, isLoading } = useQuery({ queryKey: ['tutorials'], queryFn: api.getTutorials });
+  const { data, isLoading, isError } = useTutorials();
   const [term, setTerm] = useState('');
   const [difficulty, setDifficulty] = useState('all');
 
   const filtered = useMemo(() => {
-    if (!data) return [];
-    return data
+    if (!data?.items) return [];
+    return data.items
       .filter((t) => t.title.toLowerCase().includes(term.toLowerCase()) || t.description.toLowerCase().includes(term.toLowerCase()))
       .filter((t) => (difficulty === 'all' ? true : t.difficulty === difficulty));
   }, [data, term, difficulty]);
 
   if (isLoading) return <p>Loading tutorials...</p>;
+  if (isError) return <p className="text-red-500">Failed to load tutorials.</p>;
 
   return (
     <div className="space-y-4">
@@ -39,7 +40,7 @@ function TutorialsContent() {
           </Select>
         </div>
         <Button asChild>
-          <a href="/create-tutorial">Create Tutorial</a>
+          <Link href="/create-tutorial">Create Tutorial</Link>
         </Button>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
@@ -56,13 +57,14 @@ function TutorialsContent() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-slate-500">{tutorial.description}</p>
-              <div className="text-sm text-slate-500">Views {tutorial.metrics.views}</div>
+              <div className="text-sm text-slate-500">Views {tutorial.views}</div>
               <Button variant="ghost" asChild className="mt-2">
-                <a href={`/tutorial/${tutorial.id}`}>Read</a>
+                <Link href={`/tutorials/${tutorial.id}`}>Read</Link>
               </Button>
             </CardContent>
           </Card>
         ))}
+        {filtered.length === 0 && <p className="text-slate-500">No tutorials found.</p>}
       </div>
     </div>
   );
