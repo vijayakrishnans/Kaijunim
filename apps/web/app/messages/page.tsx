@@ -1,14 +1,16 @@
-"use client";
+'use client';
 
-import { api } from '@/lib/mock-client';
-import { useQuery } from '@tanstack/react-query';
+import { useConversations } from '@/lib/api/hooks';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 function MessagesPageContent() {
-  const { data, isLoading } = useQuery({ queryKey: ['messages'], queryFn: api.getMessages });
+  const { data, isLoading, isError } = useConversations();
 
-  if (isLoading || !data) return <p>Loading messages...</p>;
+  if (isLoading) return <p>Loading messages...</p>;
+  if (isError) return <p className="text-red-500">Failed to load conversations.</p>;
+  if (!data?.items?.length) return <p>No conversations yet.</p>;
 
   return (
     <div className="space-y-4">
@@ -17,16 +19,16 @@ function MessagesPageContent() {
         <Button variant="outline">New conversation</Button>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
-        {data.map((conv) => (
+        {data.items.map((conv) => (
           <Card key={conv.id}>
             <CardHeader className="flex items-center justify-between">
-              <p className="font-semibold">Chat with {conv.participantIds.join(', ')}</p>
-              <span className="text-sm text-slate-500">Unread {conv.unread}</span>
+              <p className="font-semibold">Chat with {conv.participants.map((p) => p.name).join(', ')}</p>
+              <span className="text-sm text-slate-500">Unread {conv.unreadCount}</span>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-500">{conv.lastMessage}</p>
+              <p className="text-sm text-slate-500">{conv.lastMessagePreview}</p>
               <Button variant="ghost" asChild className="mt-2">
-                <a href={`/chat/${conv.id}`}>Open</a>
+                <Link href={`/messages/${conv.id}`}>Open</Link>
               </Button>
             </CardContent>
           </Card>
